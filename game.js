@@ -421,8 +421,9 @@ function lineOfSight(a, b) {
 function maybeTriggerOverwatch(enemy) {
   state.party.forEach((p) => {
     if (p.dead || !p.overwatch || p.overwatchShots <= 0) return;
-    if (dist(p, enemy) <= classDefs.Ranger.attack.range && lineOfSight(p, enemy)) {
-      applyDamage(enemy, Math.floor(classDefs.Ranger.attack.damage * state.upgrades.damageScale), "ranged");
+    const attack = classDefs[p.className].attack;
+    if (dist(p, enemy) <= attack.range && lineOfSight(p, enemy)) {
+      applyDamage(enemy, Math.floor(attack.damage * state.upgrades.damageScale), "ranged", attack);
       p.overwatchShots -= 1;
     }
   });
@@ -629,7 +630,7 @@ function levelScreen() {
       if (barrel) tile.classList.add("barrel");
       if (entity && state.party.includes(entity) && !entity.dead) tile.classList.add("player");
       if (entity && state.enemies.includes(entity) && !entity.dead) tile.classList.add("enemy");
-      if (entity && !entity.dead) tile.textContent = entity.name ? "🛡" : "👹";
+      if (entity && !entity.dead) tile.textContent = state.party.includes(entity) ? "🛡" : "👹";
       else if (barrel) tile.textContent = "💥";
       else if (cover?.kind === "half") tile.textContent = "◧";
       else if (cover?.kind === "full") tile.textContent = "◼";

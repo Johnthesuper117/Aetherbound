@@ -49,7 +49,7 @@ const levels = [
       { type: "Goblin Scrapper", x: 8, y: 4 },
       { type: "Goblin Scrapper", x: 6, y: 7 },
     ],
-    cover: Array.from({ length: 8 }, (_, i) => ({ x: 2 + (i % 4), y: 2 + Math.floor(i / 2), kind: "half" })),
+    cover: Array.from({ length: 8 }, (_, i) => ({ x: 2 + (i % 4), y: 2 + Math.floor(i / 4), kind: "half" })),
     barrels: [],
   },
   {
@@ -185,7 +185,10 @@ function startLevel(index) {
   const level = levels[index];
   state.cover = level.cover.map((c) => ({ ...c }));
   state.barrels = level.barrels.map((b) => ({ ...b }));
-  state.enemies = level.enemies.map((e) => ({ id: uid(), ...enemyDefs[e.type], ...e }));
+  state.enemies = level.enemies.map((e) => {
+    const base = enemyDefs[e.type];
+    return { id: uid(), ...base, maxHp: base.hp, ...e };
+  });
   state.party.forEach((p, i) => {
     if (!p.dead) {
       p.x = 1;
@@ -669,9 +672,6 @@ function upgradeScreen() {
     c.innerHTML = `<div>${u.text}</div><div style="margin-top:8px"><button>Select</button></div>`;
     c.querySelector("button").onclick = () => {
       applyUpgrade(u.id);
-      state.party.forEach((p) => {
-        p.moveRange += u.id === "boots" ? 1 : 0;
-      });
       startLevel(state.levelIndex + 1);
       render();
     };

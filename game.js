@@ -290,7 +290,7 @@ function useAbility(player, key) {
     if (!primary) return;
     const maxChains = state.upgrades.spellweaverChain ? 4 : 2;
     const struck = [primary];
-    for (let i = 0; i < maxChains; i++) {
+    for (let chainIndex = 0; chainIndex < maxChains; chainIndex++) {
       const next = state.enemies.find((e) => !struck.includes(e) && struck.some((s) => dist(e, s) === 1));
       if (next) struck.push(next);
     }
@@ -454,8 +454,9 @@ function runEnemyTurn() {
       for (let step = 0; step < enemy.move; step++) {
         const dx = target.x > enemy.x ? 1 : target.x < enemy.x ? -1 : 0;
         const dy = target.y > enemy.y ? 1 : target.y < enemy.y ? -1 : 0;
-        const nx = enemy.x + (Math.abs(target.x - enemy.x) > Math.abs(target.y - enemy.y) ? dx : 0);
-        const ny = enemy.y + (Math.abs(target.x - enemy.x) > Math.abs(target.y - enemy.y) ? 0 : dy);
+        const preferHorizontal = Math.abs(target.x - enemy.x) > Math.abs(target.y - enemy.y);
+        const nx = enemy.x + (preferHorizontal ? dx : 0);
+        const ny = enemy.y + (preferHorizontal ? 0 : dy);
         if (!inBounds(nx, ny) || entityAt(nx, ny)) break;
         enemy.x = nx;
         enemy.y = ny;
@@ -585,7 +586,7 @@ function levelScreen() {
   const heroRow = document.getElementById("heroRow");
   state.party.forEach((p) => {
     const b = document.createElement("button");
-    b.textContent = `${p.name} (${p.className}) HP:${Math.max(0, p.hp)}${p.dead ? " ☠" : ""}`;
+    b.textContent = `${p.name} (${p.className}) HP:${Math.max(0, p.hp)}${p.dead ? " [DEAD]" : ""}`;
     b.disabled = p.dead;
     if (state.activeId === p.id) b.classList.add("selected");
     b.onclick = () => {
@@ -632,6 +633,20 @@ function levelScreen() {
       else if (barrel) tile.textContent = "💥";
       else if (cover?.kind === "half") tile.textContent = "◧";
       else if (cover?.kind === "full") tile.textContent = "◼";
+      tile.setAttribute(
+        "aria-label",
+        entity && !entity.dead
+          ? entity.name
+            ? `Player ${entity.name}`
+            : `Enemy ${entity.type}`
+          : barrel
+            ? "Explosive barrel"
+            : cover?.kind === "half"
+              ? "Half cover"
+              : cover?.kind === "full"
+                ? "Full cover"
+                : "Empty tile",
+      );
       const ap = activePlayer();
       if (ap && !ap.dead && !ap.moved && dist(ap, { x, y }) <= ap.moveRange && !entityAt(x, y)) {
         tile.classList.add("reachable");
